@@ -143,20 +143,23 @@ def get_src_include():
 
 
 def _is_using_gcc(obj):
-    is_gcc = False
+    is_gcc, cc = False, ''
     if obj.compiler.compiler_type == 'unix':
         cc = sysconfig.get_config_var("CC")
         if not cc:
             cc = ""
         is_gcc = "gcc" in cc
-    return is_gcc
+    return is_gcc, cc
 
 
 class build_ext(old_build_ext):
     def build_extension(self, ext):
-        if _is_using_gcc(self):
+        is_gcc, cc = _is_using_gcc(self)
+        if is_gcc:
             if '-std=c99' not in ext.extra_compile_args:
                 ext.extra_compile_args.append('-std=c99')
+        elif cc == 'clang':
+            ext.extra_compile_args += ['-arch', 'x86_64']
         old_build_ext.build_extension(self, ext)
 
 
